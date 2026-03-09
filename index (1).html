@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Il Mondo dei Blocchi – Server Minecraft</title>
+  <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&family=Cinzel:wght@400;600;900&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --gold: #c9a84c;
+      --gold-light: #f0d080;
+      --ember: #e05a1a;
+      --ember-dark: #8b2e06;
+      --stone: #2a2420;
+      --stone-mid: #1a1614;
+      --stone-dark: #100e0c;
+      --parchment: #d4b896;
+      --parchment-light: #ede0cc;
+      --green: #4a7c3f;
+      --green-bright: #6bbf5e;
+      --blue-mist: #3a5f8a;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background-color: var(--stone-dark);
+      color: var(--parchment);
+      font-family: 'Crimson Text', Georgia, serif;
+      font-size: 18px;
+      overflow-x: hidden;
+      cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20'%3E%3Cpolygon points='0,0 0,16 4,12 6,18 8,17 6,11 11,11' fill='%23c9a84c' stroke='%23100e0c' stroke-width='1'/%3E%3C/svg%3E") 0 0, auto;
+    }
+
+    /* ── NOISE TEXTURE OVERLAY ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 9999; opacity: .35;
+    }
+
+    /* ── HERO ── */
+    #hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      position: relative;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% 40%, rgba(200,100,20,.18) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 80% at 80% 70%, rgba(74,124,63,.12) 0%, transparent 60%),
+        linear-gradient(180deg, #050403 0%, #100e0c 40%, #1a1614 100%);
+      overflow: hidden;
+      text-align: center;
+      padding: 2rem;
+    }
+
+    /* Pixel grid background */
+    #hero::after {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(201,168,76,.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(201,168,76,.03) 1px, transparent 1px);
+      background-size: 32px 32px;
+      pointer-events: none;
+    }
+
+    .hero-emblem {
+      width: 120px; height: 120px;
+      margin-bottom: 2rem;
+      animation: floatUp 3s ease-in-out infinite;
+      filter: drop-shadow(0 0 30px rgba(201,168,76,.5));
+      position: relative; z-index: 2;
+    }
+
+    @keyframes floatUp {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-12px); }
+    }
+
+    .hero-tagline {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(.75rem, 1.5vw, .9rem);
+      letter-spacing: .4em;
+      text-transform: uppercase;
+      color: var(--ember);
+      margin-bottom: 1rem;
+      animation: fadeIn .8s ease both;
+      position: relative; z-index: 2;
+    }
+
+    h1.hero-title {
+      font-family: 'Cinzel', serif;
+      font-weight: 900;
+      font-size: clamp(2.8rem, 7vw, 5.5rem);
+      line-height: 1.05;
+      color: var(--gold-light);
+      text-shadow:
+        0 0 40px rgba(201,168,76,.6),
+        0 4px 0 rgba(0,0,0,.8),
+        0 0 80px rgba(224,90,26,.3);
+      animation: fadeIn 1s .2s ease both;
+      position: relative; z-index: 2;
+      letter-spacing: .03em;
+    }
+
+    .hero-sub {
+      max-width: 560px;
+      font-size: 1.1rem;
+      font-style: italic;
+      color: var(--parchment);
+      opacity: .85;
+      margin-top: 1.2rem;
+      animation: fadeIn 1s .5s ease both;
+      position: relative; z-index: 2;
+      line-height: 1.7;
+    }
+
+    .hero-btns {
+      display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;
+      margin-top: 2.5rem;
+      animation: fadeIn 1s .8s ease both;
+      position: relative; z-index: 2;
+    }
+
+    .btn {
+      font-family: 'Cinzel', serif;
+      font-size: .85rem;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      text-decoration: none;
+      padding: .8rem 2rem;
+      border: none; cursor: pointer;
+      position: relative; overflow: hidden;
+      transition: transform .2s, box-shadow .2s;
+    }
+
+    .btn::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: rgba(255,255,255,.08);
+      transform: translateX(-100%);
+      transition: transform .3s;
+    }
+    .btn:hover::before { transform: translateX(0); }
+    .btn:hover { transform: translateY(-2px); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--ember-dark), var(--ember));
+      color: var(--parchment-light);
+      box-shadow: 0 4px 20px rgba(224,90,26,.4), inset 0 1px 0 rgba(255,200,100,.15);
+      clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+    }
+    .btn-primary:hover { box-shadow: 0 6px 30px rgba(224,90,26,.6); }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--gold);
+      border: 1px solid var(--gold);
+      box-shadow: 0 0 15px rgba(201,168,76,.1), inset 0 0 15px rgba(201,168,76,.05);
+      clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+    }
+    .btn-secondary:hover { box-shadow: 0 0 25px rgba(201,168,76,.3); color: var(--gold-light); }
+
+    /* Ember particles */
+    .particles { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+    .particle {
+      position: absolute;
+      width: 3px; height: 3px;
+      border-radius: 50%;
+      background: var(--ember);
+      animation: rise linear infinite;
+      opacity: 0;
+    }
+    @keyframes rise {
+      0%   { transform: translateY(0) translateX(0); opacity: .8; }
+      100% { transform: translateY(-120vh) translateX(var(--dx)); opacity: 0; }
+    }
+
+    /* Scroll arrow */
+    .scroll-hint {
+      position: absolute; bottom: 2rem; left: 50%;
+      transform: translateX(-50%);
+      animation: bounce 2s ease-in-out infinite;
+      opacity: .5; z-index: 2;
+      font-size: 1.4rem; color: var(--gold);
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50% { transform: translateX(-50%) translateY(8px); }
+    }
+
+    /* ── DIVIDERS ── */
+    .rune-divider {
+      display: flex; align-items: center; gap: 1rem;
+      margin: 3rem auto; max-width: 400px;
+      opacity: .6;
+    }
+    .rune-divider::before, .rune-divider::after {
+      content: ''; flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    }
+    .rune-divider span {
+      font-family: 'Cinzel', serif;
+      color: var(--gold);
+      font-size: .9rem;
+    }
+
+    /* ── SECTIONS ── */
+    section { padding: 5rem 1.5rem; position: relative; }
+
+    .section-label {
+      font-family: 'Cinzel', serif;
+      font-size: .75rem;
+      letter-spacing: .5em;
+      text-transform: uppercase;
+      color: var(--ember);
+      text-align: center;
+      margin-bottom: .75rem;
+    }
+
+    h2.section-title {
+      font-family: 'Cinzel', serif;
+      font-weight: 900;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      color: var(--gold-light);
+      text-align: center;
+      text-shadow: 0 0 30px rgba(201,168,76,.3);
+      margin-bottom: 1rem;
+    }
+
+    .section-intro {
+      max-width: 600px;
+      margin: 0 auto 3rem;
+      text-align: center;
+      font-style: italic;
+      opacity: .8;
+      line-height: 1.8;
+    }
+
+    /* ── WORLDS GRID ── */
+    #worlds {
+      background:
+        radial-gradient(ellipse 70% 50% at 50% 0%, rgba(26,22,20,.8) 0%, transparent 70%),
+        var(--stone-mid);
+    }
+
+    .worlds-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .world-card {
+      background: linear-gradient(145deg, rgba(42,36,32,.9), rgba(16,14,12,.9));
+      border: 1px solid rgba(201,168,76,.15);
+      padding: 2.5rem 2rem;
+      position: relative;
+      overflow: hidden;
+      transition: transform .3s, border-color .3s, box-shadow .3s;
+      clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px));
+    }
+
+    .world-card::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: var(--card-glow, rgba(201,168,76,.04));
+      opacity: 0;
+      transition: opacity .3s;
+    }
+    .world-card:hover::before { opacity: 1; }
+    .world-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(201,168,76,.4);
+      box-shadow: 0 12px 40px rgba(0,0,0,.5), 0 0 30px var(--card-glow-shadow, rgba(201,168,76,.1));
+    }
+
+    .world-card.hub   { --card-glow: rgba(201,168,76,.06); --card-glow-shadow: rgba(201,168,76,.15); }
+    .world-card.adventure { --card-glow: rgba(224,90,26,.06); --card-glow-shadow: rgba(224,90,26,.15); }
+    .world-card.survival { --card-glow: rgba(74,124,63,.06); --card-glow-shadow: rgba(74,124,63,.15); }
+
+    .world-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      display: block;
+      filter: drop-shadow(0 0 12px currentColor);
+    }
+
+    .world-card h3 {
+      font-family: 'Cinzel', serif;
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--gold);
+      margin-bottom: .75rem;
+    }
+
+    .world-card.adventure h3 { color: var(--ember); }
+    .world-card.survival h3  { color: var(--green-bright); }
+
+    .world-card p {
+      font-size: .95rem;
+      line-height: 1.75;
+      opacity: .8;
+    }
+
+    .world-badge {
+      display: inline-block;
+      margin-top: 1.2rem;
+      font-family: 'Cinzel', serif;
+      font-size: .65rem;
+      letter-spacing: .3em;
+      text-transform: uppercase;
+      padding: .3rem .8rem;
+      border: 1px solid currentColor;
+      opacity: .6;
+    }
+    .world-card.hub .world-badge        { color: var(--gold); }
+    .world-card.adventure .world-badge  { color: var(--ember); }
+    .world-card.survival .world-badge   { color: var(--green-bright); }
+
+    /* ── FEATURES ── */
+    #features {
+      background: var(--stone-dark);
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .feat {
+      text-align: center;
+      padding: 2rem 1.5rem;
+      border: 1px solid rgba(201,168,76,.08);
+      background: rgba(42,36,32,.4);
+      transition: border-color .3s, background .3s;
+    }
+    .feat:hover {
+      border-color: rgba(201,168,76,.3);
+      background: rgba(42,36,32,.7);
+    }
+    .feat .icon { font-size: 2.2rem; margin-bottom: .8rem; }
+    .feat h4 {
+      font-family: 'Cinzel', serif;
+      font-size: .95rem;
+      color: var(--gold);
+      margin-bottom: .5rem;
+    }
+    .feat p { font-size: .85rem; opacity: .7; line-height: 1.6; }
+
+    /* ── STATUS ── */
+    #status {
+      background:
+        radial-gradient(ellipse 60% 60% at 30% 50%, rgba(58,95,138,.08) 0%, transparent 60%),
+        var(--stone-mid);
+    }
+
+    .status-container {
+      max-width: 800px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+    }
+
+    @media (max-width: 600px) { .status-container { grid-template-columns: 1fr; } }
+
+    .status-block {
+      background: rgba(16,14,12,.7);
+      border: 1px solid rgba(201,168,76,.12);
+      padding: 2rem;
+      clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+    }
+
+    .status-block h3 {
+      font-family: 'Cinzel', serif;
+      font-size: 1rem;
+      color: var(--gold);
+      margin-bottom: 1.2rem;
+      padding-bottom: .6rem;
+      border-bottom: 1px solid rgba(201,168,76,.15);
+    }
+
+    .status-item {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      padding: .5rem 0;
+      font-size: .9rem;
+    }
+
+    .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .dot.done    { background: var(--green-bright); box-shadow: 0 0 8px var(--green-bright); }
+    .dot.wip     { background: var(--gold);          box-shadow: 0 0 8px var(--gold); }
+    .dot.pending { background: #555; }
+
+    /* Progress bars */
+    .progress-row { margin-bottom: 1.2rem; }
+    .progress-label {
+      display: flex; justify-content: space-between;
+      font-family: 'Cinzel', serif;
+      font-size: .75rem;
+      color: var(--parchment);
+      margin-bottom: .4rem;
+      opacity: .8;
+    }
+    .progress-bar {
+      height: 6px;
+      background: rgba(255,255,255,.07);
+      position: relative;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--ember-dark), var(--gold));
+      transform-origin: left;
+      animation: growBar 1.5s cubic-bezier(.4,0,.2,1) both;
+      animation-delay: var(--d, 0s);
+    }
+    @keyframes growBar {
+      from { transform: scaleX(0); }
+      to   { transform: scaleX(1); }
+    }
+
+    /* ── DISCORD ── */
+    #discord {
+      background: var(--stone-dark);
+      text-align: center;
+    }
+
+    .discord-card {
+      max-width: 520px;
+      margin: 0 auto;
+      background: linear-gradient(135deg, #23272a, #1a1d1f);
+      border: 1px solid rgba(88,101,242,.3);
+      padding: 3rem 2rem;
+      clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 20px 100%, 0 calc(100% - 20px));
+      position: relative;
+      overflow: hidden;
+    }
+
+    .discord-card::before {
+      content: '';
+      position: absolute; top: -50%; left: -50%;
+      width: 200%; height: 200%;
+      background: radial-gradient(circle, rgba(88,101,242,.06) 0%, transparent 60%);
+      animation: rotateSlow 20s linear infinite;
+    }
+    @keyframes rotateSlow { to { transform: rotate(360deg); } }
+
+    .discord-logo {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+      display: block;
+      filter: drop-shadow(0 0 20px rgba(88,101,242,.5));
+    }
+
+    .discord-card h3 {
+      font-family: 'Cinzel', serif;
+      font-size: 1.6rem;
+      color: #fff;
+      margin-bottom: .75rem;
+      position: relative;
+    }
+    .discord-card p {
+      font-size: .95rem;
+      opacity: .7;
+      line-height: 1.7;
+      margin-bottom: 1.8rem;
+      position: relative;
+    }
+
+    .btn-discord {
+      background: #5865f2;
+      color: #fff;
+      font-family: 'Cinzel', serif;
+      font-size: .85rem;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      text-decoration: none;
+      padding: .85rem 2.5rem;
+      display: inline-block;
+      position: relative;
+      clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+      box-shadow: 0 4px 25px rgba(88,101,242,.4);
+      transition: box-shadow .2s, transform .2s;
+    }
+    .btn-discord:hover {
+      box-shadow: 0 6px 35px rgba(88,101,242,.6);
+      transform: translateY(-2px);
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      background: #050403;
+      border-top: 1px solid rgba(201,168,76,.1);
+      text-align: center;
+      padding: 2.5rem 1rem;
+    }
+    footer p {
+      font-family: 'Cinzel', serif;
+      font-size: .75rem;
+      letter-spacing: .2em;
+      color: var(--gold);
+      opacity: .4;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0;
+      z-index: 1000;
+      padding: 1rem 2rem;
+      display: flex; justify-content: space-between; align-items: center;
+      background: linear-gradient(180deg, rgba(5,4,3,.95) 0%, transparent 100%);
+      backdrop-filter: blur(4px);
+      border-bottom: 1px solid rgba(201,168,76,.06);
+    }
+
+    .nav-brand {
+      font-family: 'Cinzel', serif;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--gold);
+      text-decoration: none;
+      letter-spacing: .1em;
+    }
+
+    .nav-links {
+      display: flex; gap: 2rem; list-style: none;
+    }
+    .nav-links a {
+      font-family: 'Cinzel', serif;
+      font-size: .75rem;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      color: var(--parchment);
+      text-decoration: none;
+      opacity: .7;
+      transition: opacity .2s, color .2s;
+    }
+    .nav-links a:hover { opacity: 1; color: var(--gold); }
+
+    @media (max-width: 600px) {
+      .nav-links { display: none; }
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity .7s ease, transform .7s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Staggered children */
+    .stagger > * {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity .6s ease, transform .6s ease;
+    }
+    .stagger.visible > *:nth-child(1) { opacity:1; transform:none; transition-delay:.1s; }
+    .stagger.visible > *:nth-child(2) { opacity:1; transform:none; transition-delay:.2s; }
+    .stagger.visible > *:nth-child(3) { opacity:1; transform:none; transition-delay:.3s; }
+    .stagger.visible > *:nth-child(4) { opacity:1; transform:none; transition-delay:.4s; }
+    .stagger.visible > *:nth-child(5) { opacity:1; transform:none; transition-delay:.5s; }
+    .stagger.visible > *:nth-child(6) { opacity:1; transform:none; transition-delay:.6s; }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-brand" href="#">⚔ Il Mondo dei Blocchi</a>
+  <ul class="nav-links">
+    <li><a href="#worlds">Mondi</a></li>
+    <li><a href="#features">Caratteristiche</a></li>
+    <li><a href="#status">Stato</a></li>
+    <li><a href="#discord">Discord</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <!-- Ember particles -->
+  <div class="particles" id="particles"></div>
+
+  <!-- Emblem SVG -->
+  <svg class="hero-emblem" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <radialGradient id="gShield" cx="50%" cy="40%">
+        <stop offset="0%" stop-color="#f0d080"/>
+        <stop offset="100%" stop-color="#8b5e1a"/>
+      </radialGradient>
+    </defs>
+    <!-- Shield -->
+    <path d="M60 8 L102 28 L102 65 Q102 95 60 112 Q18 95 18 65 L18 28 Z"
+          fill="url(#gShield)" stroke="#c9a84c" stroke-width="2"/>
+    <!-- Inner shield -->
+    <path d="M60 20 L92 36 L92 65 Q92 88 60 102 Q28 88 28 65 L28 36 Z"
+          fill="none" stroke="rgba(201,168,76,.4)" stroke-width="1"/>
+    <!-- Sword -->
+    <rect x="57" y="22" width="6" height="52" rx="2" fill="#1a1614" stroke="#c9a84c" stroke-width="1"/>
+    <rect x="46" y="60" width="28" height="6" rx="2" fill="#c9a84c"/>
+    <polygon points="60,18 63,27 57,27" fill="#f0d080"/>
+    <!-- Stars -->
+    <circle cx="44" cy="44" r="3" fill="#f0d080" opacity=".8"/>
+    <circle cx="76" cy="44" r="3" fill="#f0d080" opacity=".8"/>
+    <circle cx="60" cy="88" r="3" fill="#f0d080" opacity=".6"/>
+  </svg>
+
+  <p class="hero-tagline">Server Minecraft Custom &bull; RPG &bull; Avventura &bull; Survival</p>
+  <h1 class="hero-title">Il Mondo<br>dei Blocchi</h1>
+  <p class="hero-sub">
+    Un universo di missioni, boss leggendari e terre inesplorate ti attende.
+    Forgia la tua leggenda, blocco dopo blocco.
+  </p>
+
+  <div class="hero-btns">
+    <a href="#worlds" class="btn btn-primary">Esplora i Mondi</a>
+    <a href="#discord" class="btn btn-secondary">Unisciti a Discord</a>
+  </div>
+
+  <div class="scroll-hint">▼</div>
+</section>
+
+<!-- WORLDS -->
+<section id="worlds">
+  <p class="section-label reveal">I Tre Regni</p>
+  <h2 class="section-title reveal">Scegli il Tuo Destino</h2>
+  <p class="section-intro reveal">
+    Ogni mondo cela segreti, pericoli e ricompense. Dall'hub centrale fino alle terre selvagge,
+    l'avventura non finisce mai.
+  </p>
+
+  <div class="worlds-grid stagger">
+    <!-- Spawn Hub -->
+    <div class="world-card hub">
+      <span class="world-icon">🌍</span>
+      <h3>Spawn Hub</h3>
+      <p>
+        Il cuore del server. Incontra mercanti, accetta missioni e preparati per le sfide che ti attendono.
+        NPC esperti ti guideranno nei segreti del mondo.
+      </p>
+      <span class="world-badge">Area Sicura</span>
+    </div>
+
+    <!-- Avventura -->
+    <div class="world-card adventure">
+      <span class="world-icon">⚔️</span>
+      <h3>Mondo Avventura</h3>
+      <p>
+        Dungeon pericolosi, boss colossali e oggetti leggendari. Ogni mappa racconta un capitolo
+        della storia del server. Solo i più coraggiosi sopravvivono.
+      </p>
+      <span class="world-badge">Zona di Guerra</span>
+    </div>
+
+    <!-- Survival -->
+    <div class="world-card survival">
+      <span class="world-icon">🏡</span>
+      <h3>Mondo Survival</h3>
+      <p>
+        Raccogli risorse, costruisci la tua base e forma alleanze. Conquista territori,
+        difendi le tue terre e domina gli altri clan nel grande conflitto.
+      </p>
+      <span class="world-badge">Mondo Aperto</span>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features">
+  <p class="section-label reveal">Cosa Ti Aspetta</p>
+  <h2 class="section-title reveal">Caratteristiche del Server</h2>
+
+  <div class="features-grid stagger">
+    <div class="feat">
+      <div class="icon">🧙</div>
+      <h4>NPC Custom</h4>
+      <p>Mercanti, quest-giver e guide con dialoghi e missioni uniche.</p>
+    </div>
+    <div class="feat">
+      <div class="icon">🐲</div>
+      <h4>Boss Epici</h4>
+      <p>Creature leggendarie con pattern di attacco unici e loot speciale.</p>
+    </div>
+    <div class="feat">
+      <div class="icon">📜</div>
+      <h4>Sistema Missioni</h4>
+      <p>Storia profonda con missioni principali e secondarie interconnesse.</p>
+    </div>
+    <div class="feat">
+      <div class="icon">⚗️</div>
+      <h4>Oggetti Rari</h4>
+      <p>Armi, armature e artefatti con abilità speciali per distinguersi.</p>
+    </div>
+    <div class="feat">
+      <div class="icon">🏰</div>
+      <h4>Fazioni & PvP</h4>
+      <p>Crea o unisciti a fazioni, conquista territori e combatti in guerra.</p>
+    </div>
+    <div class="feat">
+      <div class="icon">🗺️</div>
+      <h4>Mappe Uniche</h4>
+      <p>Zone costruite a mano con atmosfere e segreti da scoprire.</p>
+    </div>
+  </div>
+</section>
+
+<!-- STATUS -->
+<section id="status">
+  <p class="section-label reveal">Sviluppo</p>
+  <h2 class="section-title reveal">Stato del Progetto</h2>
+  <p class="section-intro reveal">
+    Il server è in costruzione attiva. Ecco dove siamo e cosa sta per arrivare.
+  </p>
+
+  <div class="status-container">
+    <div class="status-block reveal">
+      <h3>✦ Completato</h3>
+      <div class="status-item"><span class="dot done"></span>Struttura Spawn Hub</div>
+      <div class="status-item"><span class="dot done"></span>Piccole mappe iniziali</div>
+      <div class="status-item"><span class="dot done"></span>NPC base presenti</div>
+      <div class="status-item"><span class="dot wip"></span>Primo boss in sviluppo</div>
+      <div class="status-item"><span class="dot wip"></span>Sistema missioni base</div>
+      <div class="status-item"><span class="dot pending"></span>Mondo Survival completo</div>
+      <div class="status-item"><span class="dot pending"></span>Storia principale</div>
+    </div>
+
+    <div class="status-block reveal">
+      <h3>✦ Avanzamento</h3>
+
+      <div class="progress-row">
+        <div class="progress-label"><span>Spawn Hub</span><span>65%</span></div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width:65%; --d:0.2s"></div>
+        </div>
+      </div>
+
+      <div class="progress-row">
+        <div class="progress-label"><span>Mondo Avventura</span><span>30%</span></div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width:30%; --d:0.4s"></div>
+        </div>
+      </div>
+
+      <div class="progress-row">
+        <div class="progress-label"><span>Mondo Survival</span><span>10%</span></div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width:10%; --d:0.6s"></div>
+        </div>
+      </div>
+
+      <div class="progress-row">
+        <div class="progress-label"><span>Boss & Mob Custom</span><span>20%</span></div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width:20%; --d:0.8s"></div>
+        </div>
+      </div>
+
+      <div class="progress-row">
+        <div class="progress-label"><span>Sistema Missioni</span><span>15%</span></div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width:15%; --d:1s"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DISCORD -->
+<section id="discord">
+  <p class="section-label reveal">Comunità</p>
+  <h2 class="section-title reveal">Unisciti alla Gilda</h2>
+
+  <div class="discord-card reveal">
+    <span class="discord-logo">🎮</span>
+    <h3>Server Discord Ufficiale</h3>
+    <p>
+      La guida completa del server vive su Discord: schede sui boss, mappe interattive,
+      annunci di aggiornamenti e la nostra comunità di avventurieri.
+    </p>
+    <a href="https://discord.gg/FKjUXAxur" target="_blank" class="btn-discord">Entra nel Discord</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="rune-divider"><span>✦ ✦ ✦</span></div>
+  <p>© 2025 Il Mondo dei Blocchi &bull; Server Minecraft Custom &bull; Tutti i diritti riservati</p>
+</footer>
+
+<script>
+  // ── Ember particles
+  const container = document.getElementById('particles');
+  for (let i = 0; i < 40; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const size = Math.random() * 3 + 1;
+    p.style.cssText = `
+      left:${Math.random()*100}%;
+      bottom:${Math.random()*20}%;
+      width:${size}px; height:${size}px;
+      --dx:${(Math.random()-0.5)*120}px;
+      animation-duration:${4+Math.random()*6}s;
+      animation-delay:${Math.random()*6}s;
+      background:${Math.random()>.5?'#e05a1a':'#f0d080'};
+    `;
+    container.appendChild(p);
+  }
+
+  // ── Scroll reveal
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.15 });
+
+  document.querySelectorAll('.reveal, .stagger').forEach(el => io.observe(el));
+</script>
+</body>
+</html>
